@@ -94,8 +94,6 @@ public class Main implements RequestHandler<RequestClass, ResponseClass> {
         public boolean promptYesNo(String s) {
             return false;
         }
-        public void showMessage(String s) {
-
-        }
+        public void showMessage(String s) {}
     }
 }

@@ -7,7 +7,6 @@ public class ResponseClass {
         this.timestamp = timestamp;
     }
 
-
     public String getTimestamp() {
         return timestamp;
     }
