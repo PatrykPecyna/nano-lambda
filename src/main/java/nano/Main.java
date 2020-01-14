@@ -7,18 +7,17 @@ import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
 
 import java.sql.*;
-import java.util.Vector;
 
 public class Main implements RequestHandler<RequestClass, ResponseClass> {
 
     public ResponseClass handleRequest(RequestClass request, Context context) {
-        String greetingString = null;
+        String timestamp = null;
         try {
-            greetingString = go(request.getBlockId()).getTimestamp();
+            timestamp = go(request.getBlockId()).getTimestamp();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new ResponseClass(greetingString);
+        return new ResponseClass(timestamp);
     }
 
     private ResponseClass go(String request) throws Exception {
@@ -29,10 +28,11 @@ public class Main implements RequestHandler<RequestClass, ResponseClass> {
         String dbUser = "nanoindexer";
         String dbPassword = "inzynieria";
         int sshPort = 22;
-
         int tunnelLocalPort = 9080;
         String tunnelRemoteHost = "nanoindexer.mysql.pythonanywhere-services.com";
         int tunnelRemotePort = 3306;
+        String driver = "com.mysql.cj.jdbc.Driver";
+        String connectionUrl = "jdbc:mysql://localhost:" + tunnelLocalPort + "/";
 
         java.util.Properties config = new java.util.Properties();
         config.put("StrictHostKeyChecking", "no");
@@ -46,35 +46,20 @@ public class Main implements RequestHandler<RequestClass, ResponseClass> {
         session.connect();
         session.setPortForwardingL(tunnelLocalPort,tunnelRemoteHost,tunnelRemotePort);
 
-        String driver = "com.mysql.cj.jdbc.Driver";
-        String connectionUrl = "jdbc:mysql://localhost:" + tunnelLocalPort + "/";
-        Connection connection = null;
-
         Class.forName(driver);
-        connection = DriverManager.getConnection(connectionUrl + database, dbUser, dbPassword);
+        Connection connection = DriverManager.getConnection(connectionUrl + database, dbUser, dbPassword);
         Statement statement = connection.createStatement();
-        Vector<DataBlock> output = new Vector<DataBlock>();
-        String query = "SELECT * FROM nanosite_tabela WHERE block_id='" + request + "'";
+        String query = "SELECT timestamp FROM nanosite_tabela WHERE block_id='" + request + "'";
         ResultSet resultSet = statement.executeQuery(query);
-        ResultSetMetaData resultSetMD = resultSet.getMetaData();
 
+        ResponseClass responseTimestamp = null;
         while (resultSet.next()) {
-            System.out.println();
-            if (resultSetMD.getColumnCount() < 8) {
-                System.out.println("record: " + resultSet.getString(1) + " contains to few values to put into Data Block object");
-            }
-            else {
-                output.add(new DataBlock(Integer.parseInt(resultSet.getString(1)),
-                        resultSet.getString(2), resultSet.getString(3),
-                        resultSet.getString(4), resultSet.getString(5),
-                        resultSet.getString(6), resultSet.getString(7),
-                        resultSet.getString(8)));
-            }
+            responseTimestamp = new ResponseClass(resultSet.getString(1));
         }
         connection.close();
         session.disconnect();
 
-        return new ResponseClass(output.lastElement().getTimestamp());
+        return responseTimestamp;
     }
 
     class localUserInfo implements UserInfo {

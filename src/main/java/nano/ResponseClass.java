@@ -14,7 +14,4 @@ public class ResponseClass {
     public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
-
-    public void setTimeStamp() {
-    }
 }
